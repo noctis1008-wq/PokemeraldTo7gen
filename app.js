@@ -15,6 +15,7 @@ const IN_BOX = 30;
 
 const GEN7_MAX_ABILITY = 233;
 const MET_LOCATION_ROUTE1 = 6; // 1ばんどうろ
+const EGG_LOCATION_NURSERY = 60002; // あずかりやさん (タマゴを もらった場所)
 
 const SUBSTRUCT_OFFSETS = [
   [0, 0, 0, 0, 0, 0, 1, 1, 2, 3, 2, 3, 1, 1, 2, 3, 2, 3, 1, 1, 2, 3, 2, 3],
@@ -260,8 +261,11 @@ function convert(m, version, today) {
 
   const level = m.level || levelFromExp(sp.growth, m.experience);
   // 出会ったレベルはセーブデータのものを使う (0 = タマゴからかえった → 1)
-  let metLevel = m.metLevel;
-  if (metLevel === 0) { metLevel = 1; notes.push('タマゴからかえったポケモンなので出会ったレベルは1に'); }
+  // 第3世代では タマゴからかえったポケモンは 出会ったレベルが0。
+  // 第7世代の正規のデータに合わせ「あずかりやさんで もらったタマゴを 1ばんどうろで かえした」(レベル1) にする
+  const hatched = m.metLevel === 0;
+  let metLevel = hatched ? 1 : m.metLevel;
+  if (hatched) notes.push('タマゴからかえった（あずかりやさんの タマゴ）');
   if (metLevel > level) metLevel = level;
   let nick = decodeName(m.nicknameRaw);
   const speciesName = DATA.jaSpecies[sp.dex] || '';
@@ -299,6 +303,12 @@ function convert(m, version, today) {
   b[0x93] = 0;                       // いまのおや = おや
   writeName(b, 0xB0, ot);
   b[0xCA] = m.friendship;
+  if (hatched) {
+    b[0xD1] = today.getFullYear() - 2000;  // タマゴを もらった日
+    b[0xD2] = today.getMonth() + 1;
+    b[0xD3] = today.getDate();
+    dv.setUint16(0xD8, EGG_LOCATION_NURSERY, true);
+  }
   b[0xD4] = today.getFullYear() - 2000;
   b[0xD5] = today.getMonth() + 1;
   b[0xD6] = today.getDate();
