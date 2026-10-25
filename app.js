@@ -394,8 +394,35 @@ function render() {
     tr.appendChild(td);
     tbody.appendChild(tr);
   });
+  renderAlola();
   $('#summary').textContent = `${results.length}匹中 ${ok}匹を変換できます（${results.length - ok}匹は第7世代にいないため対象外）`;
   $('#result').hidden = false;
+}
+
+// 変換できたポケモンのうち、アローラ図鑑 (ウルトラサン・ウルトラムーン) に のるもの
+function renderAlola() {
+  const bySpecies = new Map();
+  results.forEach(r => {
+    if (r.conv.error) return;
+    const no = DATA.alolaDex[r.conv.dex];
+    if (!no) return;
+    const e = bySpecies.get(r.conv.dex) || { no, name: r.conv.speciesName, count: 0 };
+    e.count++;
+    bySpecies.set(r.conv.dex, e);
+  });
+  const list = [...bySpecies.values()].sort((a, b) => a.no - b.no);
+  const total = list.reduce((n, e) => n + e.count, 0);
+  $('#alolaSummary').textContent = `${list.length}種類・${total}匹（アローラ図鑑 全403種類のうち）`;
+  const tbody = $('#alolaList tbody');
+  tbody.textContent = '';
+  list.forEach(e => {
+    const tr = document.createElement('tr');
+    [`No.${String(e.no).padStart(3, '0')}`, e.name, `${e.count}匹`].forEach(t => {
+      const td = document.createElement('td'); td.textContent = t; tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  $('#alola').hidden = false;
 }
 
 async function onFile(file) {
@@ -411,6 +438,7 @@ async function onFile(file) {
     $('#error').textContent = e.message;
     $('#error').hidden = false;
     $('#result').hidden = true;
+    $('#alola').hidden = true;
   }
 }
 

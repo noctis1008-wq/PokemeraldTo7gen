@@ -2,7 +2,7 @@
 import json, re, struct, sys
 
 import os
-# S: 作業フォルダ (vals.json, PKHeX の clone, 出力先 web/ を置く)  REPO: ハックのリポジトリ (ビルド済み)
+# S: 作業フォルダ (vals.json, PKHeX と PokeAPI の clone, 出力先 web/ を置く)  REPO: ハックのリポジトリ (ビルド済み)
 S = os.environ.get('WORK_DIR', '.')
 REPO = os.environ.get('HACK_REPO', '../PokeEm-expansion-CanuseJP')
 PKX = S + '/pkhex/PKHeX.Core/Resources/text'
@@ -138,7 +138,15 @@ for ln in open(REPO + '/charmap.txt', encoding='utf-8'):
         if b not in charmap or ('぀' <= ch <= 'ヿ'):
             charmap[b] = ch
 
-data = {'moves': moves, 'items': items, 'species': species, 'jaSpecies': ja_species, 'charmap': charmap}
+# ---- アローラ図鑑 (ウルトラサン・ウルトラムーン) の番号 ----
+# PokeAPI の data/v2/csv/pokemon_dex_numbers.csv (pokedex_id 21 = updated-alola)
+import csv
+alola_dex = {}
+for r in csv.DictReader(open(S + '/pokeapi/data/v2/csv/pokemon_dex_numbers.csv')):
+    if r['pokedex_id'] == '21':
+        alola_dex[int(r['species_id'])] = int(r['pokedex_number'])
+
+data = {'moves': moves, 'items': items, 'species': species, 'jaSpecies': ja_species, 'charmap': charmap, 'alolaDex': alola_dex}
 json.dump(data, open(S + '/web/data.json', 'w'), ensure_ascii=False, separators=(',', ':'))
 print('moves', len(moves), 'items', len(items), 'species', len(species))
 print('unmatched gen<=7 moves:', unmatched_moves[:40])

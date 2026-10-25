@@ -14,6 +14,7 @@ PKHeX で読み込める第7世代（サン・ムーン／ウルトラサン・�
 - 第7世代にないわざ・持ち物・特性・ボールは外すか置きかえる
 - 性格はミント適用後、色違いかどうかはハックでの見た目のまま
 - PKHeX の正当性チェックで「不正」と出ることがある
+- 変換できたポケモンのうち、アローラ図鑑（ウルトラサン・ウルトラムーン）にのるものを一覧と数で表示
 
 ## ファイル
 
@@ -23,4 +24,5 @@ PKHeX で読み込める第7世代（サン・ムーン／ウルトラサン・�
 ## 出典
 
 - 種族・わざ・持ち物の名前と番号の対応: [PKHeX](https://github.com/kwsch/PKHeX) のテキストリソース
+- アローラ図鑑の番号: [PokeAPI](https://github.com/PokeAPI/pokeapi) の pokemon_dex_numbers.csv
 - セーブデータの構造・種族データ: [pokeemerald-expansion](https://github.com/rh-hideout/pokeemerald-expansion)
