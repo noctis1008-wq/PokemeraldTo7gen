@@ -16,6 +16,9 @@ const IN_BOX = 30;
 const GEN7_MAX_ABILITY = 233;
 const MET_LOCATION_ROUTE1 = 6; // 1ばんどうろ
 const EGG_LOCATION_NURSERY = 60002; // あずかりやさん (タマゴを もらった場所)
+const MET_LOCATION_POKE_TRANSFER = 30001; // ポケシフター
+const VERSION_EMERALD = 3;
+const LAST_GEN5_DEX = 649;
 
 const SUBSTRUCT_OFFSETS = [
   [0, 0, 0, 0, 0, 0, 1, 1, 2, 3, 2, 3, 1, 1, 2, 3, 2, 3, 1, 1, 2, 3, 2, 3],
@@ -263,8 +266,13 @@ function convert(m, version, today) {
   // 出会ったレベルはセーブデータのものを使う (0 = タマゴからかえった → 1)
   // 第3世代では タマゴからかえったポケモンは 出会ったレベルが0。
   // 第7世代の正規のデータに合わせ「あずかりやさんで もらったタマゴを 1ばんどうろで かえした」(レベル1) にする
-  const hatched = m.metLevel === 0;
-  let metLevel = hatched ? 1 : m.metLevel;
+  // 第5世代までのポケモン (アローラのすがた・帽子ピカチュウなど第7世代だけの姿は除く) は
+  // 「エメラルドから ポケシフターで やってきた」にする。正規の流れと同じく、出会ったレベルは今のレベル、タマゴの記録は残らない
+  const gen7OnlyForm = sp.name.includes('ALOLA') || (sp.dex === 25 && sp.form > 0);
+  const transferred = sp.dex <= LAST_GEN5_DEX && !gen7OnlyForm;
+  const hatched = !transferred && m.metLevel === 0;
+  let metLevel = transferred ? level : (hatched ? 1 : m.metLevel);
+  if (transferred) notes.push('ポケシフターから やってきた（エメラルド出身）');
   if (hatched) notes.push('タマゴからかえった（あずかりやさんの タマゴ）');
   if (metLevel > level) metLevel = level;
   let nick = decodeName(m.nicknameRaw);
@@ -312,12 +320,12 @@ function convert(m, version, today) {
   b[0xD4] = today.getFullYear() - 2000;
   b[0xD5] = today.getMonth() + 1;
   b[0xD6] = today.getDate();
-  dv.setUint16(0xDA, MET_LOCATION_ROUTE1, true);
+  dv.setUint16(0xDA, transferred ? MET_LOCATION_POKE_TRANSFER : MET_LOCATION_ROUTE1, true);
   b[0xDC] = ball;
   b[0xDD] = (Math.min(metLevel, 100) & 0x7F) | ((m.otGender & 1) << 7);
   const ht = m.hyperTrained;
   b[0xDE] = ht.hp | (ht.atk << 1) | (ht.def << 2) | (ht.spa << 3) | (ht.spd << 4) | (ht.spe << 5);
-  b[0xDF] = version;
+  b[0xDF] = transferred ? VERSION_EMERALD : version;
   b[0xE3] = 1;                       // 日本語
   let chk = 0;
   for (let i = 8; i < 0xE8; i += 2) chk = (chk + dv.getUint16(i, true)) & 0xFFFF;
