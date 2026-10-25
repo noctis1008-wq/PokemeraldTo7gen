@@ -3,7 +3,7 @@
 PokeEm-expansion-CanuseJP（日本語版 pokeemerald-expansion ハック）のセーブデータ（.sav）から、
 PKHeX で読み込める第7世代（サン・ムーン／ウルトラサン・ウルトラムーン）用の `.pk7` ファイルを作る Web ツールです。
 
-**使い方**: https://noctis1008-wq.github.io/pokeem-pk7-converter/ を開いて、セーブデータを選ぶだけです。
+**使い方**: https://noctis1008-wq.github.io/PokemeraldTo7gen/ を開いて、セーブデータを選ぶだけです。
 ファイルはブラウザの中だけで処理され、どこにも送信されません。
 
 ## 変換のきまり
