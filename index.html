@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ポケモン第7世代変換</title>
+<meta name="description" content="PokeEm-expansion-CanuseJP のセーブデータから、PKHeX で読める第7世代 (.pk7) のポケモンを取り出すツール">
+<style>
+:root {
+  --bg: #f6f5f1; --fg: #1f1f1d; --muted: #5d5b55; --card: #ffffff; --line: #dcd9d0;
+  --accent: #c2410c; --accent-fg: #ffffff; --skip: #8a877f; --err-bg: #fde8e4; --err-fg: #8f1d0b;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #171716; --fg: #ecebe6; --muted: #a8a59c; --card: #222220; --line: #3a3935;
+    --accent: #fb923c; --accent-fg: #1a1208; --skip: #77746c; --err-bg: #3b1a12; --err-fg: #ffb4a3;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: system-ui, "Hiragino Sans", "Noto Sans JP", sans-serif; line-height: 1.6; }
+main { max-width: 960px; margin: 0 auto; padding: 32px 16px 64px; }
+h1 { font-size: 1.6rem; margin: 0 0 4px; }
+.lead { color: var(--muted); margin: 0 0 24px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+label { font-weight: 600; display: block; margin-bottom: 6px; }
+.row { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-end; }
+.row > div { flex: 1 1 260px; }
+input[type=file], select { font: inherit; color: inherit; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px; width: 100%; min-height: 44px; }
+button { font: inherit; border: none; border-radius: 8px; background: var(--accent); color: var(--accent-fg); padding: 10px 18px; min-height: 44px; cursor: pointer; font-weight: 600; }
+button.small { padding: 4px 10px; min-height: 32px; font-size: 0.85rem; }
+.note { color: var(--muted); font-size: 0.9rem; margin: 8px 0 0; }
+.error { background: var(--err-bg); color: var(--err-fg); border-radius: 8px; padding: 12px; margin-bottom: 20px; }
+.tablebox { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; white-space: nowrap; }
+td:nth-child(6) { white-space: normal; min-width: 200px; }
+th { background: var(--bg); font-weight: 600; }
+tr.skip td { color: var(--skip); }
+.toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+ul { padding-left: 1.2em; margin: 8px 0 0; }
+</style>
+</head>
+<body>
+<main>
+<h1>ポケモン第7世代変換</h1>
+<p class="lead">PokeEm-expansion-CanuseJP（日本語版 pokeemerald-expansion ハック）のセーブデータから、PKHeX で読み込める第7世代（サン・ムーン／ウルトラサン・ウルトラムーン）用の <code>.pk7</code> ファイルを作ります。ファイルはブラウザの中だけで処理し、どこにも送りません。</p>
+
+<section class="card">
+<div class="row">
+<div>
+<label for="file">セーブデータ（.sav）</label>
+<input type="file" id="file" accept=".sav,.srm,.bin" disabled>
+</div>
+<div>
+<label for="version">出身バージョン</label>
+<select id="version">
+<option value="30">サン</option>
+<option value="31">ムーン</option>
+<option value="32" selected>ウルトラサン</option>
+<option value="33">ウルトラムーン</option>
+</select>
+</div>
+</div>
+<p class="note">出会った場所は「1ばんどうろ」、出会った日は今日になります。出会ったレベルはセーブデータのものをそのまま使います。</p>
+</section>
+
+<div id="error" class="error" role="alert" hidden></div>
+
+<section id="result" class="card" hidden>
+<div class="toolbar">
+<p id="summary" style="margin:0"></p>
+<button type="button" id="zip">選んだポケモンを .zip でダウンロード</button>
+</div>
+<div class="tablebox">
+<table id="list">
+<thead><tr>
+<th><input type="checkbox" id="all" checked aria-label="すべて選ぶ"></th>
+<th>場所</th><th>ポケモン</th><th>ニックネーム</th><th>レベル</th><th>メモ</th><th>ファイル</th>
+</tr></thead>
+<tbody></tbody>
+</table>
+</div>
+</section>
+
+<section class="card">
+<h2 style="font-size:1.1rem;margin:0">変換のきまり</h2>
+<ul>
+<li>第7世代にいないポケモン・すがた（第8世代以降、ガラル・ヒスイ・パルデアのすがたなど）とタマゴは対象外です。</li>
+<li>第7世代にないわざ・持ち物・特性・ボールは外すか、近いものに置きかえます（メモ欄に書きます）。</li>
+<li>性格はミントを使った後の性格、色違いかどうかはこのハックでの見た目のままになるようにします。</li>
+<li>PKHeX の正当性チェックでは「不正」と出ることがあります（このハックだけの覚えるわざなどがあるため）。</li>
+<li>PKHeX には、できた <code>.pk7</code> をボックスにドラッグ＆ドロップすると入ります。</li>
+</ul>
+</section>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
